@@ -1,0 +1,249 @@
+// src/supabase/supabase.service.ts
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+
+@Injectable()
+export class SupabaseService {
+  private readonly logger = new Logger(SupabaseService.name);
+  private supabase: SupabaseClient;
+
+  constructor(private configService: ConfigService) {
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL') ?? "URL";
+    const supabaseAnonKey = this.configService.get<string>('SUPABASE_ROLE_SERVICE_KEY') ?? "AnonKey";
+
+    this.supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+      },
+    });
+  }
+
+  getClient(): SupabaseClient {
+    return this.supabase;
+  }
+
+  // STORAGE METHODS
+
+  
+  
+  async createBucket(
+    bucketName: string,
+    options: {
+      public?: boolean;
+      fileSizeLimit?: number;
+    
+    } = {}
+  ) {
+    const { data, error } = await this.supabase.storage.createBucket(bucketName, {
+      public: options.public || false,
+      fileSizeLimit: options.fileSizeLimit || 52428800, // 50MB default
+  
+    });
+
+    if (error) {
+      this.logger.error(`Error creating bucket ${bucketName}:`, error);
+      throw new Error(error.message);
+    }
+
+    this.logger.log(`Bucket ${bucketName} created successfully`);
+    return data;
+  }
+  // List all buckets
+  async listBuckets() {
+    try {
+      console.log('Supabase client initialized:', !!this.supabase);
+      console.log('Storage available:', !!this.supabase?.storage);
+      
+      const { data, error } = await this.supabase.storage.listBuckets();
+      
+      console.log('Raw response:', { data, error });
+      
+      if (error) {
+        this.logger.error('Error listing buckets:', error);
+        console.error('Supabase storage error:', error);
+        throw new Error(error.message);
+      }
+      
+      console.log('Buckets found:', data);
+      return data;
+    } catch (err) {
+      console.error('Unexpected error in listBuckets:', err);
+      throw err;
+    }
+  }
+
+  async updateBucket(
+    bucketName: string,
+    options: {
+      public?: boolean;
+      fileSizeLimit?: number;
+      allowedMimeTypes?: string[];
+    }
+  ) {
+    const { data, error } = await this.supabase.storage.updateBucket(bucketName, {
+      public: options.public ?? false,
+      fileSizeLimit: options.fileSizeLimit,
+      allowedMimeTypes: options.allowedMimeTypes,
+    });
+
+    if (error) {
+      this.logger.error(`Error updating bucket ${bucketName}:`, error);
+      throw new Error(error.message);
+    }
+
+    this.logger.log(`Bucket ${bucketName} updated successfully`);
+    return data;
+  }
+  // Get a specific bucket
+  async getBucket(bucketName: string) {
+    const { data, error } = await this.supabase.storage.getBucket(bucketName);
+    
+    if (error) {
+      this.logger.error(`Error getting bucket ${bucketName}:`, error);
+      throw new Error(error.message);
+    }
+    
+    return data;
+  }
+
+  async bucketExists(bucketName: string): Promise<boolean> {
+    try {
+      await this.getBucket(bucketName);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  // List files in a bucket
+  async listFiles(bucketName: string, folderPath?: string) {
+    const { data, error } = await this.supabase.storage
+      .from(bucketName)
+      .list(folderPath || '');
+
+    if (error) {
+      this.logger.error(`Error listing files in ${bucketName}:`, error);
+      throw new Error(error.message);
+    }
+
+    return data;
+  }
+
+  // Upload a file
+  async uploadFile(
+    bucketName: string,
+    filePath: string,
+    file: Buffer | File,
+    options: {
+      upsert?: boolean;
+      contentType: string;
+    }
+  ) {
+    const { data, error } = await this.supabase.storage
+      .from(bucketName)
+      .upload(filePath, file, {
+        upsert: options?.upsert || false,
+        contentType: options?.contentType,
+      });
+
+    if (error) {
+      this.logger.error(`Error uploading file to ${bucketName}:`, error);
+      throw new Error(error.message);
+    }
+ const URL = this.getPublicUrl(bucketName, filePath);
+    return {data, URL, options};
+  }
+
+  // Download a file
+  async downloadFile(bucketName: string, filePath: string) {
+    const { data, error } = await this.supabase.storage
+      .from(bucketName)
+      .download(filePath);
+
+    if (error) {
+      this.logger.error(`Error downloading file from ${bucketName}:`, error);
+      throw new Error(error.message);
+    }
+
+    return data;
+  }
+
+  // Get public URL for a file
+  getPublicUrl(bucketName: string, filePath: string) {
+    const { data } = this.supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  }
+
+  // Get signed URL (for private files)
+  async createSignedUrl(
+    bucketName: string,
+    filePath: string,
+    expiresIn: number = 60, // seconds
+  ) {
+    const { data, error } = await this.supabase.storage
+      .from(bucketName)
+      .createSignedUrl(filePath, expiresIn);
+
+    if (error) {
+      this.logger.error(`Error creating signed URL for ${filePath}:`, error);
+      throw new Error(error.message);
+    }
+
+    return data;
+  }
+
+  // Delete files
+  async deleteFiles(bucketName: string, filePaths: string[]) {
+    const { data, error } = await this.supabase.storage
+      .from(bucketName)
+      .remove(filePaths);
+
+    if (error) {
+      this.logger.error(`Error deleting files from ${bucketName}:`, error);
+      throw new Error(error.message);
+    }
+
+    return data;
+  }
+
+  // Move or rename file
+  async moveFile(
+    bucketName: string,
+    fromPath: string,
+    toPath: string,
+  ) {
+    const { data, error } = await this.supabase.storage
+      .from(bucketName)
+      .move(fromPath, toPath);
+
+    if (error) {
+      this.logger.error(`Error moving file in ${bucketName}:`, error);
+      throw new Error(error.message);
+    }
+
+    return data;
+  }
+
+  // Copy file
+  async copyFile(
+    bucketName: string,
+    fromPath: string,
+    toPath: string,
+  ) {
+    const { data, error } = await this.supabase.storage
+      .from(bucketName)
+      .copy(fromPath, toPath);
+
+    if (error) {
+      this.logger.error(`Error copying file in ${bucketName}:`, error);
+      throw new Error(error.message);
+    }
+
+    return data;
+  }
+}
