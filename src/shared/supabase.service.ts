@@ -110,12 +110,19 @@ export class SupabaseService {
 
   async bucketExists(bucketName: string): Promise<boolean> {
     try {
-      await this.getBucket(bucketName);
+      const { data, error } = await this.supabase.storage.getBucket(bucketName);
+  
+      if (error || !data) {
+        return false;
+      }
+  
       return true;
-    } catch (error) {
+    } catch (err) {
+      this.logger.error(`Error checking bucket existence: ${err.message}`);
       return false;
     }
   }
+  
 
   // List files in a bucket
   async listFiles(bucketName: string, folderPath?: string) {
@@ -152,7 +159,7 @@ export class SupabaseService {
       this.logger.error(`Error uploading file to ${bucketName}:`, error);
       throw new Error(error.message);
     }
- const URL = this.getPublicUrl(bucketName, filePath);
+ const URL = await this.createSignedUrl(bucketName,filePath);
     return {data, URL, options};
   }
 
@@ -184,7 +191,7 @@ export class SupabaseService {
     bucketName: string,
     filePath: string,
     expiresIn: number = 60, // seconds
-  ) {
+  ){
     const { data, error } = await this.supabase.storage
       .from(bucketName)
       .createSignedUrl(filePath, expiresIn);
@@ -194,7 +201,7 @@ export class SupabaseService {
       throw new Error(error.message);
     }
 
-    return data;
+    return data.signedUrl;
   }
 
   // Delete files

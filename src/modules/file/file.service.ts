@@ -19,7 +19,7 @@ export class FileService {
     const fileBuffer = readFileSync(createFileDto.filePath);
     const filename = createFileDto.filePath.substring(createFileDto.filePath.lastIndexOf('/') + 1);
     const filePath = user?.name + " - " + id + "/" + filename
-  const data =  this.supabaseService.uploadFile(
+  const data =  await this.supabaseService.uploadFile(
       this.config.get<string>("DEFAULT_BUCKET") || 'default',
       filePath,
        fileBuffer,
@@ -29,7 +29,7 @@ export class FileService {
       }
     );
 
-  const Record = this.prisma.file.create({
+  const Record = await this.prisma.file.create({
     data: {
       url : (await data).URL,
       mimeType : (await data).options?.contentType,

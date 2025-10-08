@@ -14,7 +14,7 @@ export class ProjectService {
     if(await this.supabase.bucketExists(createProjectDto.name)){
       throw new ConflictException("This Project already exist")
     }
-    
+    console.log("Project does not exist lets create one")
       const hashed = await this.hashPassword(createProjectDto.password);
       this.supabase.createBucket(createProjectDto.name)
      const project =  this.prisma.project.create({
@@ -28,12 +28,12 @@ export class ProjectService {
    
   }
 
-  findAll() {
-    return `This action returns all project`;
+  async findAll() {
+    return await this.prisma.project.findMany({});
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} project`;
+  async findOne(id: number) {
+    return await this.prisma.project.findUnique({ where: { id } });
   }
 
   async update(id: number, updateProjectDto: UpdateProjectDto, name?: string) {
@@ -49,14 +49,6 @@ export class ProjectService {
     }
 
 
-    if(updateProjectDto.name){
-      this.supabase.updateBucket(updateProjectDto.name, {})
-      project = await this.prisma.project.update({
-        where: { id: project.id },
-        data: { name: updateProjectDto.name }
-      });
-      
-    }
     if(updateProjectDto.password){
       const hashed = await this.hashPassword(updateProjectDto.password)
       project = await this.prisma.project.update({
