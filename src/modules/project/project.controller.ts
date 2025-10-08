@@ -1,16 +1,24 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ValidationPipe, UseGuards } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { JwtAuthService } from 'src/shared/jwt/jwt.service';
+import { JwtAuthGuard } from '../auth/auth.guard';
 
 
 @Controller('project')
 export class ProjectController {
-  constructor(private readonly projectService: ProjectService) {}
+  constructor(private readonly projectService: ProjectService, private readonly jwtService : JwtAuthService) {}
 
   @Post()
-  create(@Body(new ValidationPipe()) createProjectDto: CreateProjectDto) {
-    return this.projectService.create(createProjectDto);
+  async create(@Body(new ValidationPipe()) createProjectDto: CreateProjectDto) {
+    await this.projectService.create(createProjectDto)
+    return await this.jwtService.Authenticate(createProjectDto);
+  }
+
+  @Post("/login")
+  Login(@Body(new ValidationPipe()) createProjectDto: CreateProjectDto){
+    return this.jwtService.Authenticate(createProjectDto);
   }
 
   @Get()
@@ -24,6 +32,7 @@ export class ProjectController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   update(@Param('id') id: string, @Body(new ValidationPipe()) updateProjectDto: UpdateProjectDto) {
     return this.projectService.update(+id, updateProjectDto);
   }

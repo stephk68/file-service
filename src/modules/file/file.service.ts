@@ -14,13 +14,13 @@ export class FileService {
     private readonly config : ConfigService
   ) {}
 
-  async create(createFileDto: CreateFileDto, id: number) {
+  async create(createFileDto: CreateFileDto, id: number, name : string) {
     const user = await this.prisma.project.findUnique({ where: { id } });
     const fileBuffer = readFileSync(createFileDto.filePath);
     const filename = createFileDto.filePath.substring(createFileDto.filePath.lastIndexOf('/') + 1);
     const filePath = user?.name + " - " + id + "/" + filename
   const data =  await this.supabaseService.uploadFile(
-      this.config.get<string>("DEFAULT_BUCKET") || 'default',
+      name || 'default',
       filePath,
        fileBuffer,
       {
