@@ -6,6 +6,7 @@ import { SupabaseService } from './shared/supabase.service';
 
 import { FileModule } from './modules/file/file.module';
 import { ProjectModule } from './modules/project/project.module';
+import { UserModule } from './modules/user/user.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -14,6 +15,7 @@ import { ProjectModule } from './modules/project/project.module';
     }),
     FileModule,
     ProjectModule,
+    UserModule,
    
   ],
   controllers: [AppController],

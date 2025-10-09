@@ -12,8 +12,7 @@ export class ProjectController {
 
   @Post()
   async create(@Body(new ValidationPipe()) createProjectDto: CreateProjectDto) {
-    await this.projectService.create(createProjectDto)
-    return await this.jwtService.Authenticate(createProjectDto);
+    return await this.projectService.create(createProjectDto);
   }
 
   @Post("/login")

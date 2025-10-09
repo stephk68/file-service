@@ -14,30 +14,32 @@ export class FileService {
     private readonly config : ConfigService
   ) {}
 
-  async create(createFileDto: CreateFileDto, id: number, name : string) {
-    const user = await this.prisma.project.findUnique({ where: { id } });
-    const fileBuffer = readFileSync(createFileDto.filePath);
-    const filename = createFileDto.filePath.substring(createFileDto.filePath.lastIndexOf('/') + 1);
-    const filePath = user?.name + " - " + id + "/" + filename
+  async create(createFileDto: CreateFileDto) {
+    // const user = await this.prisma.project.findUnique({ where: { id } });
+    if(createFileDto.filepath && !createFileDto.filepath.endsWith("/")){
+      createFileDto.filepath = createFileDto.filepath + "/"
+    }
+    const filename = createFileDto.filename;
+    const filePath = createFileDto.filepath + filename;
   const data =  await this.supabaseService.uploadFile(
-      name || 'default',
+      'File1',
       filePath,
-       fileBuffer,
+       createFileDto.file,
       {
         contentType: createFileDto.mimetype,
         upsert: true,
       }
     );
 
-  const Record = await this.prisma.file.create({
-    data: {
-      url : (await data).URL,
-      mimeType : (await data).options?.contentType,
-      ProjectId : id
-    },
-  });
+  // const Record = await this.prisma.file.create({
+  //   data: {
+  //     url : (await data).URL,
+  //     mimeType : (await data).options?.contentType,
+  //     ProjectId : id
+  //   },
+  // });
 
-  return Record;
+  return data;
   }
 
   findAll() {

@@ -6,6 +6,8 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma.service';
 import { CreateProjectDto } from 'src/modules/project/dto/create-project.dto';
 import {compare} from "bcrypt"
+import { CreateUserDto} from "src/modules/user/dto/create-user.dto"
+import { RedisService} from "../redis.service";
 
 @Injectable()
 export class JwtAuthService {
@@ -15,8 +17,8 @@ export class JwtAuthService {
   
   private readonly refreshSecret = 'dev-super-secure-refresh-secret-key-2024-for-testing-only';
 
-  async Authenticate(project : CreateProjectDto) {
-    const name = project.name;
+  async Authenticate(project : CreateUserDto) {
+    const name = project.username;
     const password = project.password;
 
     const existingUser = await this.prisma.project.findFirst({
