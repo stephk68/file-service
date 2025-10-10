@@ -3,31 +3,31 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import * as jwt from 'jsonwebtoken';
 import { Token,JwtPayload } from './jwtInterface';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma.service';
-import { CreateProjectDto } from 'src/modules/project/dto/create-project.dto';
 import {compare} from "bcrypt"
 import { CreateUserDto} from "src/modules/user/dto/create-user.dto"
 import { RedisService} from "../redis.service";
+import { LoginDto } from 'src/modules/user/dto/login.dto';
 
 @Injectable()
 export class JwtAuthService {
     private readonly jwtSecret :string
     constructor(private readonly config : ConfigService,
-        private prisma: PrismaService){this.jwtSecret = this.config.get<string>("JWT_SECRET")?? "";}
+       private readonly redisService : RedisService ){this.jwtSecret = this.config.get<string>("JWT_SECRET")?? "";}
   
-  private readonly refreshSecret = 'dev-super-secure-refresh-secret-key-2024-for-testing-only';
 
-  async Authenticate(project : CreateUserDto) {
+  async Authenticate(project : LoginDto) {
     const name = project.username;
     const password = project.password;
 
-    const existingUser = await this.prisma.project.findFirst({
-      where: { name },
-    });
+  
+const existingUser = await this.redisService.jsonGet(name);
+
+    
 
     if (!existingUser) {
       throw new NotFoundException("This user does not exist");
     }
+
 
     const isPasswordValid = await compare(password, existingUser.password);
     
@@ -35,19 +35,18 @@ export class JwtAuthService {
       throw new BadRequestException("Incorrect Password");
     }
 
-    console.log(`This user name is ${existingUser.name}`);
+    console.log(`This user name is ${existingUser.username}`);
 
     const payload = {
-      name: existingUser.name,
-      sub: existingUser.id
+      name: existingUser.username,
+      AccessList : existingUser.AccessList,
     };
 
     const tokenResult = await this.generateToken(payload);
 
     
     return {
-      access_token: tokenResult.access_token,
-      refresh_token : tokenResult.refresh_token,
+      access_token: tokenResult.access_token
       
     };
   }
@@ -57,19 +56,13 @@ export class JwtAuthService {
     try {
       const jwtPayload = { 
 
-        name: payload.name, 
-        sub: payload.sub
+        name: payload.name,
+        AccessList : payload.AccessList,
       };
       
-      const token = jwt.sign(jwtPayload, this.jwtSecret, { 
-        expiresIn: '15m' 
-      });
-      const refreshToken = jwt.sign(jwtPayload, this.refreshSecret, { 
-        expiresIn: '1d' 
-      });
+      const token = jwt.sign(jwtPayload, this.jwtSecret);
       
-      return { access_token: token ,
-        refresh_token : refreshToken
+      return { access_token: token 
       };
     } catch (error) {
       throw new Error(`Token generation failed: ${error.message}`);

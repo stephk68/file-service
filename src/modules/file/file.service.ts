@@ -15,14 +15,13 @@ export class FileService {
   ) {}
 
   async create(createFileDto: CreateFileDto) {
-    // const user = await this.prisma.project.findUnique({ where: { id } });
     if(createFileDto.filepath && !createFileDto.filepath.endsWith("/")){
       createFileDto.filepath = createFileDto.filepath + "/"
     }
     const filename = createFileDto.filename;
     const filePath = createFileDto.filepath + filename;
   const data =  await this.supabaseService.uploadFile(
-      'File1',
+      createFileDto.project,
       filePath,
        createFileDto.file,
       {
@@ -31,13 +30,7 @@ export class FileService {
       }
     );
 
-  // const Record = await this.prisma.file.create({
-  //   data: {
-  //     url : (await data).URL,
-  //     mimeType : (await data).options?.contentType,
-  //     ProjectId : id
-  //   },
-  // });
+
 
   return data;
   }

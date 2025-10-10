@@ -12,16 +12,18 @@ import { extname } from 'path';
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
-  @Post()
+  @Post('upload')
+  @UseGuards(FolderGuard)
   @UseInterceptors(FileInterceptor('file'))
   uploadFile(
     @UploadedFile() file,
-    @Body()  createFileDto : CreateFileDto,
-  ) {
+    @Body(new ValidationPipe())  createFileDto : CreateFileDto) {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
     // Merge file info into DTO and call service
+
+    
     const dto = {
       ...createFileDto,
       file: file.buffer,

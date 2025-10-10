@@ -15,10 +15,7 @@ export class ProjectController {
     return await this.projectService.create(createProjectDto);
   }
 
-  @Post("/login")
-  Login(@Body(new ValidationPipe()) createProjectDto: CreateProjectDto){
-    return this.jwtService.Authenticate(createProjectDto);
-  }
+ 
 
   @Get()
   findAll() {

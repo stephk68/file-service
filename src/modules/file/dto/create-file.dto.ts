@@ -16,4 +16,7 @@ export class CreateFileDto {
 
   @IsString()
   mimetype: string;
+
+  @IsString()
+  project :string;
 }

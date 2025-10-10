@@ -1,6 +1,6 @@
 import { IsString, MinLength, IsArray} from 'class-validator';
 
-export class CreateUserDto {
+export class LoginDto {
   @IsString()
   username: string;
 
@@ -8,7 +8,5 @@ export class CreateUserDto {
   @MinLength(6)
   password: string;
 
-  @IsArray()
-  AccessList : string[];
   
 }

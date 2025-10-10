@@ -16,13 +16,8 @@ export class ProjectService {
     }
     console.log("Project does not exist lets create one")
       const hashed = await this.hashPassword(createProjectDto.password);
-      this.supabase.createBucket(createProjectDto.name)
-     const project =  this.prisma.project.create({
-        data: {
-          name : createProjectDto.name,
-          password : hashed
-        }
-      })
+     const project = this.supabase.createBucket(createProjectDto.name)
+    this.supabase.saveBucketKey(createProjectDto.name, hashed );
       return project;
   
    

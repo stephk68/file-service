@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { createClient, RedisClientType } from 'redis';
 import { ConfigService } from '@nestjs/config';
+import { CreateUserDto } from 'src/modules/user/dto/create-user.dto';
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
     constructor(private readonly configService : ConfigService){}
@@ -43,7 +44,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   /** 📤 Get a key */
-  async get<T = string>(key: string): Promise<T | null> {
+  async get<T = CreateUserDto>(key: string): Promise<T | null> {
     const value = await this.client.get(key);
     if (!value) return null;
     try {
@@ -67,6 +68,28 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     // @ts-ignore
     return await this.client.sendCommand(['JSON.SET', key, path, val]);
   }
+
+  /**
+   * Get a value at a specific path in a JSON key using RedisJSON (if available).
+   * Requires RedisJSON module.
+   * @param key Redis key
+   * @param path JSON path (default: '.')
+   * @returns The value at the specified path, or null if not found.
+   */
+  async jsonGet<T = any>(key: string, path: string = '.'): Promise<T | null> {
+    // @ts-ignore
+    const result = await this.client.sendCommand(['JSON.GET', key, path]);
+  
+    if (typeof result !== 'string') return null; // handle null or other types
+  
+    try {
+      return JSON.parse(result) as T;
+    } catch {
+      return result as unknown as T; // fallback if it's not valid JSON
+    }
+  }
+  
+  
 
   /** ❌ Delete a specific key */
   async delete(key: string) {

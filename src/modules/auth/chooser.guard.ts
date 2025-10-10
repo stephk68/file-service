@@ -1,6 +1,10 @@
-// auth/jwt-auth.guard.ts
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { JwtAuthService } from 'src/shared/jwt/jwt.service';
+
+interface JwtPayload {
+  AccessList: string[];
+  // Add other fields as needed
+}
 
 @Injectable()
 export class FolderGuard implements CanActivate {
@@ -10,16 +14,21 @@ export class FolderGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader?.startsWith('Bearer ')) {
       throw new UnauthorizedException('Missing or invalid token');
     }
 
     const token = authHeader.split(' ')[1];
-
     try {
-      const payload = this.jwtService.verifyToken(token);
-      request.user = payload; // ✅ Attach decoded token to request
-      return true;
+      const payload = this.jwtService.verifyToken(token) as JwtPayload;
+      request.user = payload;
+
+      const { project } = request.body;
+      if (!project) {
+        throw new UnauthorizedException('Project not specified');
+      }
+
+      return Array.isArray(payload.AccessList) && payload.AccessList.includes(project);
     } catch (err) {
       throw new UnauthorizedException('Invalid or expired token');
     }

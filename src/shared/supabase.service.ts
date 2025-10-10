@@ -253,4 +253,42 @@ export class SupabaseService {
 
     return data;
   }
+
+  /**
+   * Store a bucket name and its key into the "BucketKeys" table on Supabase
+   * @param bucketName The name of the bucket
+   * @param key The key to associate with the bucket
+   */
+  async saveBucketKey(bucketName: string, key: string) {
+    // Insert into the table "BucketKeys" with columns: bucket_name, key
+    const { data, error } = await this.supabase
+      .from('BucketKeys')
+      .insert([{ bucket_name: bucketName, key }]);
+    if (error) {
+      this.logger.error(`Error saving bucket key for ${bucketName}:`, error);
+      throw new Error(error.message);
+    }
+    this.logger.log(`Saved bucket key for bucket "${bucketName}" successfully`);
+    return data;
+  }
+
+  /**
+   * Retrieve data from the "BucketKeys" table by bucket name
+   * @param bucketName The name of the bucket to search for
+   * @returns The first matching record or null if not found
+   */
+  async getBucketKeyByName(bucketName: string) {
+    const { data, error } = await this.supabase
+      .from('BucketKeys')
+      .select('*')
+      .eq('bucket_name', bucketName)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // not found error
+      this.logger.error(`Error fetching bucket key for ${bucketName}:`, error);
+      throw new Error(error.message);
+    }
+
+    return data ?? null;
+  }
 }
