@@ -18,17 +18,16 @@ export class FileController {
   uploadFile(
     @UploadedFile() file,
     @Body()  createFileDto : CreateFileDto,
-    @Param(':project') project: string){
+    @Param('project') project: string){
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
     // Merge file info into DTO and call service
-
-    console.log(createFileDto)
     
     const dto = {
       ...createFileDto,
       file: file.buffer,
+      project: project,
       filename: file.originalname,
       mimetype: file.mimetype,
       // Optionally add filepath if needed, e.g. from req.body or elsewhere
