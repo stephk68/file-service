@@ -7,7 +7,7 @@ import { SupabaseService } from './shared/supabase.service';
 import { FileModule } from './modules/file/file.module';
 import { ProjectModule } from './modules/project/project.module';
 import { UserModule } from './modules/user/user.module';
-import { BodyParserMiddleware } from './shared/file-parser.middleware';
+
 import { FileController } from './modules/file/file.controller';
 import { JwtAuthService } from './shared/jwt/jwt.service';
 import { RedisService } from './shared/redis.service';
@@ -32,9 +32,4 @@ import { PrismaService } from './shared/prisma.service';
 })
 
 export class AppModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(BodyParserMiddleware)
-      .forRoutes('file/upload'); // or your actual upload endpoint path
-  }
 }

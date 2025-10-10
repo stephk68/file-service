@@ -11,6 +11,7 @@ export class FolderGuard implements CanActivate {
   constructor(private jwtService: JwtAuthService) {}
 
   canActivate(context: ExecutionContext): boolean {
+    
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
 
@@ -23,12 +24,16 @@ export class FolderGuard implements CanActivate {
       const payload = this.jwtService.verifyToken(token) as JwtPayload;
       request.user = payload;
 
-      const { project } = request.body;
-      if (!project) {
-        throw new UnauthorizedException('Project not specified');
-      }
+      const accessList = payload.AccessList
+     const project =
+        request.params?.project ??
+        request.body?.project ??
+        request.query?.project;
 
-      return Array.isArray(payload.AccessList) && payload.AccessList.includes(project);
+     request.project = project;
+
+     
+      return Array.isArray(accessList) && accessList.includes(project);
     } catch (err) {
       throw new UnauthorizedException('Invalid or expired token');
     }
