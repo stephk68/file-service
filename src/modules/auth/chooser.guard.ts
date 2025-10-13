@@ -1,5 +1,6 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { JwtAuthService } from 'src/shared/jwt/jwt.service';
+import { SupabaseService } from 'src/shared/supabase.service';
 
 interface JwtPayload {
   AccessList: string[];
@@ -8,9 +9,9 @@ interface JwtPayload {
 
 @Injectable()
 export class FolderGuard implements CanActivate {
-  constructor(private jwtService: JwtAuthService) {}
+  constructor(private jwtService: JwtAuthService, private supabaseService : SupabaseService) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
@@ -29,9 +30,11 @@ export class FolderGuard implements CanActivate {
         request.params?.project ??
         request.body?.project ??
         request.query?.project;
+      request.project = project;
 
-     request.project = project;
-
+      // if(await this.supabaseService.bucketExists(project)){
+      //   throw new NotFoundException("project " + project + " does not exist")
+      // }
      
       return Array.isArray(accessList) && accessList.includes(project);
     } catch (err) {
