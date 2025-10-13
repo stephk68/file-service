@@ -159,7 +159,7 @@ export class SupabaseService {
       this.logger.error(`Error uploading file to ${bucketName}:`, error);
       throw new Error(error.message);
     }
- const URL = await this.createSignedUrl(bucketName,filePath);
+ const URL = await this.getPublicUrl(bucketName,filePath);
     return {data, URL, options};
   }
 
@@ -175,6 +175,34 @@ export class SupabaseService {
     }
 
     return data;
+  }
+
+  /**
+   * Checks if a file with the given file name exists in the specified bucket (optionally within a folder path).
+   * @param bucketName The Supabase Storage bucket name.
+   * @param fileName The name of the file to check for.
+   * @param folderPath Optional folder path within the bucket.
+   * @returns Promise<boolean> True if the file exists, otherwise false.
+   */
+  async fileExists(bucketName: string, fileName: string, folderPath?: string): Promise<boolean> {
+    try {
+      // List files inside the folder (or root if not specified)
+      const { data, error } = await this.supabase.storage
+        .from(bucketName)
+        .list(folderPath || '');
+
+      if (error) {
+        this.logger.error(`Error checking file existence in ${bucketName}:`, error);
+        throw new Error(error.message);
+      }
+
+      if (!data) return false;
+      // Look for a file with the specified name (case-sensitive)
+      return data.some((item: any) => item.name === fileName);
+    } catch (err) {
+      this.logger.error(`Unexpected error checking file existence:`, err);
+      return false;
+    }
   }
 
   // Get public URL for a file
@@ -249,6 +277,42 @@ export class SupabaseService {
     if (error) {
       this.logger.error(`Error copying file in ${bucketName}:`, error);
       throw new Error(error.message);
+    }
+
+    return data;
+  }
+
+  /**
+   * Replace a file in a bucket by deleting the old file and uploading the new one with the same path.
+   * @param bucketName The name of the bucket.
+   * @param filePath The path (including filename) of the file to replace.
+   * @param fileBuffer The Buffer of the new file.
+   * @param options (optional) Additional upload options.
+   * @returns The upload response from Supabase storage.
+   */
+  async replaceFile(
+    bucketName: string,
+    filePath: string,
+    fileBuffer: Buffer,
+    options: any = {},
+  ) {
+    // Delete the old file first
+    const { error: deleteError } = await this.supabase.storage
+      .from(bucketName)
+      .remove([filePath]);
+    if (deleteError) {
+      this.logger.error(`Error deleting old file ${filePath} in ${bucketName}:`, deleteError);
+      throw new Error(deleteError.message);
+    }
+
+    // Upload the new file content
+    const { data, error: uploadError } = await this.supabase.storage
+      .from(bucketName)
+      .upload(filePath, fileBuffer, { upsert: true, ...options });
+
+    if (uploadError) {
+      this.logger.error(`Error uploading replacement file to ${bucketName}:`, uploadError);
+      throw new Error(uploadError.message);
     }
 
     return data;

@@ -33,23 +33,45 @@ export class FileController {
     
   }
 
-  @Get()
-  findAll() {
-    return this.fileService.findAll();
-  }
+
 
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.fileService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateFileDto: UpdateFileDto) {
-    return this.fileService.update(+id, updateFileDto);
+  @Patch()
+  @UseGuards(FolderGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  async update( 
+    @UploadedFile() file,
+    @Body() updateFileDto: UpdateFileDto,
+  ) {
+   
+    if (file) {
+      updateFileDto.filename = file.originalname
+      updateFileDto.file = file.buffer;
+      updateFileDto.mimetype = file.mimetype;
+      
+    }
+    
+
+    return await this.fileService.update(updateFileDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.fileService.remove(+id);
+  @Delete()
+  @UseGuards(FolderGuard)
+  remove(@Body(new ValidationPipe()) updateFileDto: UpdateFileDto) {
+    if (!updateFileDto.filepath) {
+      throw new BadRequestException('filepath is required to delete a file.');
+    }
+
+    if (!updateFileDto.project) {
+      throw new BadRequestException('bucketName is required to delete a file.');
+    }
+
+    return this.fileService.remove(updateFileDto.project, updateFileDto.filepath);
   }
+
+
 }

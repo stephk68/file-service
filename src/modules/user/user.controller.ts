@@ -9,10 +9,7 @@ import { LoginDto, SignUpDto } from './dto/login.dto';
 export class UserController {
   constructor(private readonly userService: UserService, private readonly jwtService : JwtAuthService) {}
 
-  // @Post()
-  // create(@Body(new ValidationPipe()) createUserDto: CreateUserDto) {
-  //   return this.userService.create(createUserDto);
-  // }
+  
 
   @Post('/signUp')
   Login(@Body(new ValidationPipe()) signUp: SignUpDto) {
@@ -20,23 +17,5 @@ export class UserController {
   }
   
 
-  @Get()
-  findAll() {
-    return this.userService.findAll();
-  }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
-  }
-
-  @Patch(':name')
-  update(@Param('name') name: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(name, updateUserDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
-  }
 }

@@ -19,36 +19,9 @@ export class UserService {
     return { message: `IP address : ${ipAddress} added to white list` };
   }
 
-  findAll() {
-    return `This action returns all user`;
-  }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
 
-  async update(name: string, updateUserDto: UpdateUserDto){
 
-   
-}
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
-
-  //################################################### Utile #########################################
-
-  private async hashPassword(password: string) {
-    const hashedPassword = await hash(password, 10);
-    return hashedPassword;
-  }
-
-    private async isPasswordValid(
-    password: string,
-    hashedPassword: String) {
-    const isPasswordValid = await compare(password, hashedPassword);
-    return isPasswordValid;
-  }
 
 
 }
