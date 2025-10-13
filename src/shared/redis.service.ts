@@ -88,8 +88,43 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       return result as unknown as T; // fallback if it's not valid JSON
     }
   }
+
+  /**
+   * Push one or more values to the left of a Redis list.
+   * @param key List key
+   * @param values Value or values to insert
+   * @returns Length of the list after push
+   */
+  async lpush(key: string, ...values: any[]): Promise<number> {
+    // Convert non-string values to JSON strings
+    const parsedValues = values.map(val =>
+      typeof val === 'object' ? JSON.stringify(val) : String(val)
+    );
+    return await this.client.lPush(key, parsedValues);
+  }
   
+  /**
+   * Check if a value exists in a Redis list.
+   * @param key The Redis list key
+   * @param value The value to check for
+   * @returns True if the value exists in the list, otherwise false
+   */
+  async listContains(key: string, value: any): Promise<boolean> {
+    // Get all list members (be cautious with very large lists)
+    const values = await this.client.lRange(key, 0, -1);
+    // If value is an object, stringify for comparison
+    const compareVal = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    return values.some((item: string) => item === compareVal);
+  }
   
+  /**
+   * Get all elements from a Redis list.
+   * @param key The Redis list key
+   * @returns Array of all elements in the list
+   */
+  async listElements(key: string): Promise<string[]> {
+    return await this.client.lRange(key, 0, -1);
+  }
 
   /** ❌ Delete a specific key */
   async delete(key: string) {

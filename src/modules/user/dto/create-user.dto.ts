@@ -1,14 +1,10 @@
-import { IsString, MinLength, IsArray} from 'class-validator';
+import { IsIP, IsString } from 'class-validator';
 
 export class CreateUserDto {
-  @IsString()
-  username: string;
 
-  @IsString()
-  @MinLength(6)
-  password: string;
+   @IsIP()
+   IpAddress: string;
 
-  @IsArray()
-  AccessList : string[];
-  
+   
+
 }

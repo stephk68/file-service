@@ -1,24 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, ValidationPipe,UseInterceptors, UploadedFile, BadRequestException} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, ValidationPipe,UseInterceptors, UploadedFile, BadRequestException, UsePipes} from '@nestjs/common';
 import { FileService } from './file.service';
 import { CreateFileDto } from './dto/create-file.dto';
 import { UpdateFileDto } from './dto/update-file.dto';
 import { FolderGuard } from '../auth/chooser.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { Multer } from 'multer';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+
 
 @Controller('file')
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
-  @Post(':project')
+  @Post()
   @UseGuards(FolderGuard)
   @UseInterceptors(FileInterceptor('file'))
   uploadFile(
     @UploadedFile() file,
     @Body()  createFileDto : CreateFileDto,
-    @Param('project') project: string){
+    ){
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
@@ -27,7 +25,6 @@ export class FileController {
     const dto = {
       ...createFileDto,
       file: file.buffer,
-      project: project,
       filename: file.originalname,
       mimetype: file.mimetype,
       // Optionally add filepath if needed, e.g. from req.body or elsewhere

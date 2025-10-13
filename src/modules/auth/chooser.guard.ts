@@ -1,15 +1,12 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { JwtAuthService } from 'src/shared/jwt/jwt.service';
 import { SupabaseService } from 'src/shared/supabase.service';
-
-interface JwtPayload {
-  AccessList: string[];
-  // Add other fields as needed
-}
+import { JwtPayload } from 'src/shared/jwt/jwtInterface';
+import { RedisService } from 'src/shared/redis.service';
 
 @Injectable()
 export class FolderGuard implements CanActivate {
-  constructor(private jwtService: JwtAuthService, private supabaseService : SupabaseService) {}
+  constructor(private jwtService: JwtAuthService, private supabaseService : SupabaseService, private redis : RedisService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     
@@ -24,19 +21,11 @@ export class FolderGuard implements CanActivate {
     try {
       const payload = this.jwtService.verifyToken(token) as JwtPayload;
       request.user = payload;
+      const IP = payload.IpAddress;
 
-      const accessList = payload.AccessList
-     const project =
-        request.params?.project ??
-        request.body?.project ??
-        request.query?.project;
-      request.project = project;
 
-      // if(await this.supabaseService.bucketExists(project)){
-      //   throw new NotFoundException("project " + project + " does not exist")
-      // }
      
-      return Array.isArray(accessList) && accessList.includes(project);
+      return await this.redis.listContains("White-List", IP);
     } catch (err) {
       throw new UnauthorizedException('Invalid or expired token');
     }

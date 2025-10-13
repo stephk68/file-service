@@ -1,8 +1,8 @@
 
 
 export interface JwtPayload {
-    name: string ;
-    AccessList: string[];
+
+    IpAddress: string;
   }
   
   export interface Token {

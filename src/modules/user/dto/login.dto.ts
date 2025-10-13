@@ -1,12 +1,22 @@
-import { IsString, MinLength, IsArray} from 'class-validator';
+import { IsIP, IsString } from 'class-validator';
 
 export class LoginDto {
+ 
+
+  @IsIP()
+  IpAddress : string;
+  
+}
+
+export class SignUpDto {
+ 
   @IsString()
-  username: string;
+  username : string
 
   @IsString()
-  @MinLength(6)
-  password: string;
+  password : string
 
+  @IsIP()
+  IpAddress : string;
   
 }

@@ -3,50 +3,56 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import * as jwt from 'jsonwebtoken';
 import { Token,JwtPayload } from './jwtInterface';
 import { ConfigService } from '@nestjs/config';
-import {compare} from "bcrypt"
+import {compare,hash} from "bcrypt"
 import { CreateUserDto} from "src/modules/user/dto/create-user.dto"
 import { RedisService} from "../redis.service";
-import { LoginDto } from 'src/modules/user/dto/login.dto';
+import { SignUpDto } from 'src/modules/user/dto/login.dto';
+import { UserService } from 'src/modules/user/user.service';
+import { CreateFileDto } from 'src/modules/file/dto/create-file.dto';
 
 @Injectable()
 export class JwtAuthService {
     private readonly jwtSecret :string
     constructor(private readonly config : ConfigService,
-       private readonly redisService : RedisService ){this.jwtSecret = this.config.get<string>("JWT_SECRET")?? "";}
+       private readonly redisService : RedisService, private readonly UserService : UserService ){this.jwtSecret = this.config.get<string>("JWT_SECRET")?? "";}
   
 
-  async Authenticate(project : LoginDto) {
-    const name = project.username;
+  async Authenticate(project : SignUpDto) {
+    const username = project.username
     const password = project.password;
+    const IP = project.IpAddress;
+    
 
   
-const existingUser = await this.redisService.jsonGet(name);
+const existingUser = await this.redisService.jsonGet("Creditentials");
 
     
 
     if (!existingUser) {
-      throw new NotFoundException("This user does not exist");
+      throw new NotFoundException("Debug purpose");
     }
+
 
 
     const isPasswordValid = await compare(password, existingUser.password);
     
-    if (!isPasswordValid) {
-      throw new BadRequestException("Incorrect Password");
+    if (!isPasswordValid  || username.localeCompare(existingUser.username) !=0) {
+      throw new BadRequestException("Incorrect creditentials");
     }
 
-    console.log(`This user name is ${existingUser.username}`);
+    console.log(`Welcome to  ${existingUser.username}`);
+    
 
     const payload = {
-      name: existingUser.username,
-      AccessList : existingUser.AccessList,
+      IpAddress : IP,
     };
 
     const tokenResult = await this.generateToken(payload);
 
     
     return {
-      access_token: tokenResult.access_token
+      access_token: tokenResult.access_token,
+      message : await this.UserService.create({...CreateFileDto, IpAddress : IP})
       
     };
   }
@@ -55,9 +61,7 @@ const existingUser = await this.redisService.jsonGet(name);
   async generateToken(payload: JwtPayload): Promise<Token> {
     try {
       const jwtPayload = { 
-
-        name: payload.name,
-        AccessList : payload.AccessList,
+        IpAddress : payload.IpAddress,
       };
       
       const token = jwt.sign(jwtPayload, this.jwtSecret);

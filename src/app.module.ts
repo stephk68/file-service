@@ -13,6 +13,9 @@ import { JwtAuthService } from './shared/jwt/jwt.service';
 import { RedisService } from './shared/redis.service';
 import { FileService } from './modules/file/file.service';
 import { PrismaService } from './shared/prisma.service';
+import { UserService } from './modules/user/user.service';
+
+import { BucketExistsConstraint } from './shared/decorators/BucketExists.decorator';
 
 @Module({
 
@@ -28,7 +31,8 @@ import { PrismaService } from './shared/prisma.service';
    
   ],
   controllers: [AppController,FileController],
-  providers: [AppService, SupabaseService,JwtAuthService, RedisService, FileService, PrismaService],
+  providers: [AppService, SupabaseService,JwtAuthService, RedisService, FileService, PrismaService, UserService,BucketExistsConstraint],
+  exports: [BucketExistsConstraint],
 })
 
 export class AppModule {

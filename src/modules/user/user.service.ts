@@ -10,16 +10,13 @@ export class UserService {
   constructor(private readonly redisService: RedisService, private readonly supabaseService: SupabaseService) {}
 
  async create(createUserDto: CreateUserDto) {
-
-  if(await this.redisService.exists(createUserDto.username)){
-    throw new ConflictException("This User already exists")
-  }
-
-    const ValidList = await this.AccesslistChecker(createUserDto.AccessList);
-    const userOb = {username :createUserDto.username , password : await this.hashPassword(createUserDto.password), AccessList : ValidList}
-
-  const User = await this.redisService.jsonSet(createUserDto.username, ".", userOb)
-    return User;
+    const ipAddress = createUserDto.IpAddress;
+    if (!ipAddress) {
+      throw new ConflictException('IP address is required');
+    }
+   
+    await this.redisService.lpush('White-List', ipAddress);
+    return { message: `IP address : ${ipAddress} added to white list` };
   }
 
   findAll() {
@@ -32,21 +29,7 @@ export class UserService {
 
   async update(name: string, updateUserDto: UpdateUserDto){
 
-    if (await !this.redisService.exists(name)){
-      throw new NotFoundException("This User does not exist");
-    }
-
-    const user = await this.redisService.get(name);
-
-    const currentAccessList = (await user)?.AccessList || [];
-    const password = (await user)?.password;
-    const toAdd = (updateUserDto.AccessList || []).filter(bucket => !currentAccessList.includes(bucket));
-    const Accesslist = await this.AccesslistChecker(toAdd);
-    const NewAccessList = currentAccessList.concat(Accesslist);
-
-    const userOb = {username : name , password : password, AccessList : NewAccessList}
-    const User = this.redisService.jsonSet(name, ".", userOb)
-    return User;
+   
 }
 
   remove(id: number) {
@@ -67,46 +50,5 @@ export class UserService {
     return isPasswordValid;
   }
 
-  private async AccesslistChecker(accessList: string[]) {
-    let ValidList: string[] = [];
-    let seen = new Set<string>();
-    for (const bucketName of accessList) {
-      if (seen.has(bucketName)) {
-        // Skip duplicate bucket names
-        continue;
-      }
-      seen.add(bucketName);
 
-      const exists = await this.supabaseService.bucketExists(bucketName);
-      if (!exists) {
-        console.log("Project named " + bucketName + " does not exist");
-        continue;
-      }
-
-      const readline = await import('readline');
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-      });
-
-      // Promisified question
-      const question = (query: string) => new Promise<string>(resolve => rl.question(query, resolve));
-
-      console.log(`Project named "${bucketName}" exists. Please enter your credential to proceed.`);
-      const password = await question('Enter the password: ');
-
-      rl.close();
-
-      const project = await this.supabaseService.getBucketKeyByName(bucketName);
-
-      if (await this.isPasswordValid(password, await project.key)) {
-        console.log("Right answer!!")
-        ValidList.push(bucketName);
-        continue;
-      } else {
-        console.log("Invalid creditentials for ", bucketName, " You can always edit the the AccessList later");
-      }
-    }
-    return ValidList;
-  }
 }
