@@ -1,8 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { RedisService } from "../../shared/redis.service";
-import {hash, compare} from 'bcrypt';
 import { SupabaseService } from 'src/shared/supabase.service';
 
 @Injectable()

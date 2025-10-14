@@ -1,7 +1,6 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger, ConflictException } from '@nestjs/common';
 import { createClient, RedisClientType } from 'redis';
 import { ConfigService } from '@nestjs/config';
-import { CreateUserDto } from 'src/modules/user/dto/create-user.dto';
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
     constructor(private readonly configService : ConfigService){}
@@ -67,9 +66,21 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     const parsedValues = values.map(val =>
       typeof val === 'object' ? JSON.stringify(val) : String(val)
     );
-    return await this.client.lPush(key, parsedValues);
+    // Push only those values not already present in the list
+    let count = 0;
+    for (const parsedVal of parsedValues) {
+      const exists = await this.listContains(key, parsedVal);
+      if (!exists) {
+        await this.client.lPush(key, parsedVal);
+        count++;
+      }
+      else{
+        throw new ConflictException("This IP is already there")
+      }
+    }
+    // Return the final length of the list
+    return await this.client.lLen(key);
   }
-  
   /**
    * Check if a value exists in a Redis list.
    * @param key The Redis list key

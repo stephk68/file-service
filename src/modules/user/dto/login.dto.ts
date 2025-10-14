@@ -1,12 +1,7 @@
-import { IsIP, IsString } from 'class-validator';
+import { IsIP, IsOptional, IsString } from 'class-validator';
 
-export class LoginDto {
- 
 
-  @IsIP()
-  IpAddress : string;
-  
-}
+
 
 export class SignUpDto {
  
@@ -17,6 +12,7 @@ export class SignUpDto {
   password : string
 
   @IsIP()
+  @IsOptional()
   IpAddress : string;
   
 }

@@ -56,6 +56,12 @@ export class FileService {
     return data;
   }
 
+  async GetUrl({ filepath, project }: { filepath: string, project: string }) {
+    if (!filepath || !project) {
+      throw new Error('Both "filepath" and "project" are required');
+    }
+    return this.supabaseService.getPublicUrl(project, filepath);
+  }
 
   async update(updateFileDto: UpdateFileDto) {
    

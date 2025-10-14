@@ -3,12 +3,13 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import * as jwt from 'jsonwebtoken';
 import { Token,JwtPayload } from './jwtInterface';
 import { ConfigService } from '@nestjs/config';
-import {compare,hash} from "bcrypt"
-import { CreateUserDto} from "src/modules/user/dto/create-user.dto"
+import {compare} from "bcrypt"
 import { RedisService} from "../redis.service";
 import { SignUpDto } from 'src/modules/user/dto/login.dto';
 import { UserService } from 'src/modules/user/user.service';
-import { CreateFileDto } from 'src/modules/file/dto/create-file.dto';
+import { CreateUserDto } from 'src/modules/user/dto/create-user.dto';
+
+
 
 @Injectable()
 export class JwtAuthService {
@@ -52,7 +53,7 @@ const existingUser = await this.redisService.jsonGet("Creditentials");
     
     return {
       access_token: tokenResult.access_token,
-      message : await this.UserService.create({...CreateFileDto, IpAddress : IP})
+      message : await this.UserService.create({...CreateUserDto, IpAddress : IP})
       
     };
   }

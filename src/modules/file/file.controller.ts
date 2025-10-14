@@ -7,11 +7,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 
 
 @Controller('file')
+@UseGuards(FolderGuard)
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
   @Post()
-  @UseGuards(FolderGuard)
   @UseInterceptors(FileInterceptor('file'))
   uploadFile(
     @UploadedFile() file,
@@ -33,9 +33,13 @@ export class FileController {
     
   }
 
+  @Get()
+  Getfile(@Body() { filepath, project }: { filepath: string, project: string }){
+    return this.fileService.GetUrl({ filepath, project });
+  }
+
 
   @Patch()
-  @UseGuards(FolderGuard)
   @UseInterceptors(FileInterceptor('file'))
   async update( 
     @UploadedFile() file,
@@ -54,7 +58,6 @@ export class FileController {
   }
 
   @Delete()
-  @UseGuards(FolderGuard)
   remove(@Body(new ValidationPipe()) updateFileDto: UpdateFileDto) {
     if (!updateFileDto.filepath) {
       throw new BadRequestException('filepath is required to delete a file.');

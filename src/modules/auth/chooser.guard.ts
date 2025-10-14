@@ -15,7 +15,12 @@ export class FolderGuard implements CanActivate {
 
     if (!authHeader?.startsWith('Bearer ')) {
       throw new UnauthorizedException('Missing or invalid token');
+
     }
+
+  
+
+  
 
     const token = authHeader.split(' ')[1];
     try {
