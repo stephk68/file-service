@@ -56,15 +56,6 @@ export class FileService {
     return data;
   }
 
-  findAll() {
-    return `This action returns all file`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} file`;
-  }
-
-  
 
   async update(updateFileDto: UpdateFileDto) {
    
@@ -73,13 +64,18 @@ export class FileService {
       throw new Error('Missing required fields: project, filepath, file, or mimetype.');
     }
 
+  let data;
+    try {
     
-    const data = await this.supabaseService.replaceFile(
+    data = await this.supabaseService.replaceFile(
       updateFileDto.project,
       updateFileDto.filepath,
       updateFileDto.file,
       { contentType: updateFileDto.mimetype }
-    );
+    );}
+    catch(error){
+      throw new ConflictException("Error replacing the file")
+    }
     // After replacing the file, rename it with updateFileDto.filename if it is different from the current filepath
     try {
     if (updateFileDto.filename && updateFileDto.filename !== updateFileDto.filepath) {
@@ -111,8 +107,11 @@ export class FileService {
     if (!filepath) {
       throw new Error('Filepath is required to delete a file.');
     }
-
-    await this.supabaseService.deleteFiles(bucketName, [filepath]);
+try {
+    await this.supabaseService.deleteFiles(bucketName, [filepath]);}
+    catch(err){
+      throw new ConflictException("Could not delete this file")
+    }
 
     return { message: `File at path "${filepath}" in bucket "${bucketName}" has been deleted.` };
   }

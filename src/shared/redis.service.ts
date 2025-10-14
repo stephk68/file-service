@@ -33,41 +33,8 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     await this.client.quit();
   }
 
-  /** 📥 Set a key with optional expiration (in seconds) */
-  async set(key: string, value: any, ttlSeconds?: number) {
-    const val = typeof value === 'object' ? JSON.stringify(value) : value;
-    if (ttlSeconds) {
-      await this.client.setEx(key, ttlSeconds, val);
-    } else {
-      await this.client.set(key, val);
-    }
-  }
 
-  /** 📤 Get a key */
-  async get<T = CreateUserDto>(key: string): Promise<T | null> {
-    const value = await this.client.get(key);
-    if (!value) return null;
-    try {
-      return JSON.parse(value) as T;
-    } catch {
-      return value as T;
-    }
-  }
 
-  /** 
-   * Set a value at a specific path in a JSON key using RedisJSON (if available).
-   * Requires RedisJSON module.
-   * @param key Redis key
-   * @param path JSON path (default: '.')
-   * @param value Value to set
-   */
-  async jsonSet(key: string, path: string, value: any) {
-    // RedisJSON uses the "JSON.SET" command
-    // path should be '.' for root, or e.g. '.foo.bar'
-    const val = typeof value === 'object' ? JSON.stringify(value) : value;
-    // @ts-ignore
-    return await this.client.sendCommand(['JSON.SET', key, path, val]);
-  }
 
   /**
    * Get a value at a specific path in a JSON key using RedisJSON (if available).
@@ -126,33 +93,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return await this.client.lRange(key, 0, -1);
   }
 
-  /** ❌ Delete a specific key */
-  async delete(key: string) {
-    return await this.client.del(key);
-  }
 
-  /** 🧹 Delete all keys with a given namespace/prefix */
-  async deleteNamespace(prefix: string) {
-    const pattern = `${prefix}:*`;
-    let deletedCount = 0;
+ 
 
-    for await (const key of this.client.scanIterator({ MATCH: pattern })) {
-      await this.client.del(key);
-      deletedCount++;
-    }
+ 
 
-    this.logger.log(`Deleted ${deletedCount} keys from namespace "${prefix}"`);
-    return deletedCount;
-  }
 
-  /** 🧾 Check if a key exists */
-  async exists(key: string): Promise<boolean> {
-    return (await this.client.exists(key)) > 0;
-  }
-
-  /** 🚮 Flush entire Redis database (use with caution) */
-  async flushAll() {
-    await this.client.flushDb();
-    this.logger.warn('Redis database flushed');
-  }
 }

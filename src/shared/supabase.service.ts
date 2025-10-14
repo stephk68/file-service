@@ -28,74 +28,11 @@ export class SupabaseService {
 
   
   
-  async createBucket(
-    bucketName: string,
-    options: {
-      public?: boolean;
-      fileSizeLimit?: number;
-    
-    } = {}
-  ) {
-    const { data, error } = await this.supabase.storage.createBucket(bucketName, {
-      public: options.public || false,
-      fileSizeLimit: options.fileSizeLimit || 52428800, // 50MB default
-  
-    });
-
-    if (error) {
-      this.logger.error(`Error creating bucket ${bucketName}:`, error);
-      throw new Error(error.message);
-    }
-
-    this.logger.log(`Bucket ${bucketName} created successfully`);
-    return data;
-  }
+ 
   // List all buckets
-  async listBuckets() {
-    try {
-      console.log('Supabase client initialized:', !!this.supabase);
-      console.log('Storage available:', !!this.supabase?.storage);
-      
-      const { data, error } = await this.supabase.storage.listBuckets();
-      
-      console.log('Raw response:', { data, error });
-      
-      if (error) {
-        this.logger.error('Error listing buckets:', error);
-        console.error('Supabase storage error:', error);
-        throw new Error(error.message);
-      }
-      
-      console.log('Buckets found:', data);
-      return data;
-    } catch (err) {
-      console.error('Unexpected error in listBuckets:', err);
-      throw err;
-    }
-  }
 
-  async updateBucket(
-    bucketName: string,
-    options: {
-      public?: boolean;
-      fileSizeLimit?: number;
-      allowedMimeTypes?: string[];
-    }
-  ) {
-    const { data, error } = await this.supabase.storage.updateBucket(bucketName, {
-      public: options.public ?? false,
-      fileSizeLimit: options.fileSizeLimit,
-      allowedMimeTypes: options.allowedMimeTypes,
-    });
 
-    if (error) {
-      this.logger.error(`Error updating bucket ${bucketName}:`, error);
-      throw new Error(error.message);
-    }
-
-    this.logger.log(`Bucket ${bucketName} updated successfully`);
-    return data;
-  }
+ 
   // Get a specific bucket
   async getBucket(bucketName: string) {
     const { data, error } = await this.supabase.storage.getBucket(bucketName);
@@ -124,19 +61,6 @@ export class SupabaseService {
   }
   
 
-  // List files in a bucket
-  async listFiles(bucketName: string, folderPath?: string) {
-    const { data, error } = await this.supabase.storage
-      .from(bucketName)
-      .list(folderPath || '');
-
-    if (error) {
-      this.logger.error(`Error listing files in ${bucketName}:`, error);
-      throw new Error(error.message);
-    }
-
-    return data;
-  }
 
   // Upload a file
   async uploadFile(
@@ -163,19 +87,6 @@ export class SupabaseService {
     return {data, URL, options};
   }
 
-  // Download a file
-  async downloadFile(bucketName: string, filePath: string) {
-    const { data, error } = await this.supabase.storage
-      .from(bucketName)
-      .download(filePath);
-
-    if (error) {
-      this.logger.error(`Error downloading file from ${bucketName}:`, error);
-      throw new Error(error.message);
-    }
-
-    return data;
-  }
 
   /**
    * Checks if a file with the given file name exists in the specified bucket (optionally within a folder path).
@@ -214,23 +125,7 @@ export class SupabaseService {
     return data.publicUrl;
   }
 
-  // Get signed URL (for private files)
-  async createSignedUrl(
-    bucketName: string,
-    filePath: string,
-    expiresIn: number = 60, // seconds
-  ){
-    const { data, error } = await this.supabase.storage
-      .from(bucketName)
-      .createSignedUrl(filePath, expiresIn);
 
-    if (error) {
-      this.logger.error(`Error creating signed URL for ${filePath}:`, error);
-      throw new Error(error.message);
-    }
-
-    return data.signedUrl;
-  }
 
   // Delete files
   async deleteFiles(bucketName: string, filePaths: string[]) {
@@ -238,9 +133,14 @@ export class SupabaseService {
       .from(bucketName)
       .remove(filePaths);
 
-    if (error) {
-      this.logger.error(`Error deleting files from ${bucketName}:`, error);
-      throw new Error(error.message);
+      if (error) {
+        this.logger.error(`Error deleting files from ${bucketName}:`, error);
+        throw new Error(error.message);
+      }
+
+    if (!data || data.length === 0) {
+      this.logger.error(`No files were deleted from ${bucketName}.`, { filePaths });
+      throw new Error(`No files were deleted from bucket "${bucketName}".`);
     }
 
     return data;
@@ -265,22 +165,7 @@ export class SupabaseService {
   }
 
   // Copy file
-  async copyFile(
-    bucketName: string,
-    fromPath: string,
-    toPath: string,
-  ) {
-    const { data, error } = await this.supabase.storage
-      .from(bucketName)
-      .copy(fromPath, toPath);
 
-    if (error) {
-      this.logger.error(`Error copying file in ${bucketName}:`, error);
-      throw new Error(error.message);
-    }
-
-    return data;
-  }
 
   /**
    * Replace a file in a bucket by deleting the old file and uploading the new one with the same path.
@@ -297,12 +182,17 @@ export class SupabaseService {
     options: any = {},
   ) {
     // Delete the old file first
-    const { error: deleteError } = await this.supabase.storage
+    const { data: deleteData, error: deleteError } = await this.supabase.storage
       .from(bucketName)
       .remove([filePath]);
     if (deleteError) {
       this.logger.error(`Error deleting old file ${filePath} in ${bucketName}:`, deleteError);
       throw new Error(deleteError.message);
+    }
+    // If none deleted, data will be empty or undefined (Supabase returns array of deleted files)
+    if (!deleteData || !Array.isArray(deleteData) || deleteData.length === 0) {
+      this.logger.error(`No file was deleted at path ${filePath} in bucket ${bucketName}.`);
+      throw new Error(`No file was deleted at path ${filePath} in bucket ${bucketName}.`);
     }
 
     // Upload the new file content
@@ -318,41 +208,7 @@ export class SupabaseService {
     return data;
   }
 
-  /**
-   * Store a bucket name and its key into the "BucketKeys" table on Supabase
-   * @param bucketName The name of the bucket
-   * @param key The key to associate with the bucket
-   */
-  async saveBucketKey(bucketName: string, key: string) {
-    // Insert into the table "BucketKeys" with columns: bucket_name, key
-    const { data, error } = await this.supabase
-      .from('BucketKeys')
-      .insert([{ bucket_name: bucketName, key }]);
-    if (error) {
-      this.logger.error(`Error saving bucket key for ${bucketName}:`, error);
-      throw new Error(error.message);
-    }
-    this.logger.log(`Saved bucket key for bucket "${bucketName}" successfully`);
-    return data;
-  }
+  
 
-  /**
-   * Retrieve data from the "BucketKeys" table by bucket name
-   * @param bucketName The name of the bucket to search for
-   * @returns The first matching record or null if not found
-   */
-  async getBucketKeyByName(bucketName: string) {
-    const { data, error } = await this.supabase
-      .from('BucketKeys')
-      .select('*')
-      .eq('bucket_name', bucketName)
-      .single();
 
-    if (error && error.code !== 'PGRST116') { // not found error
-      this.logger.error(`Error fetching bucket key for ${bucketName}:`, error);
-      throw new Error(error.message);
-    }
-
-    return data ?? null;
-  }
 }

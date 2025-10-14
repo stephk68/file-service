@@ -34,12 +34,6 @@ export class FileController {
   }
 
 
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.fileService.findOne(+id);
-  }
-
   @Patch()
   @UseGuards(FolderGuard)
   @UseInterceptors(FileInterceptor('file'))
