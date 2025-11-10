@@ -13,22 +13,31 @@ export class FolderGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
 
-    if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid token');
+    // if (!authHeader?.startsWith('Bearer ')) {
+    //   throw new UnauthorizedException('Missing or invalid token');
 
-    }
-
-  
+    // }
 
   
 
-    const token = authHeader.split(' ')[1];
+  
+
+    // const token = authHeader.split(' ')[1];
     try {
-      const payload = this.jwtService.verifyToken(token) as JwtPayload;
-      request.user = payload;
-      const IP = payload.IpAddress;
+      // const payload = this.jwtService.verifyToken(token) as JwtPayload;
+      // request.user = payload;
+      // Extract IP from request headers, socket, or connection
+      const rawIp =
+        request.headers['x-forwarded-for'] ||
+        request.socket?.remoteAddress ||
+        request.connection?.remoteAddress;
+      const IP = Array.isArray(rawIp)
+        ? rawIp[0]
+        : typeof rawIp === 'string'
+        ? rawIp.split(',')[0].trim().replace('::ffff:', '')
+        : undefined;
 
-
+        
      
       return await this.redis.listContains("White-List", IP);
     } catch (err) {

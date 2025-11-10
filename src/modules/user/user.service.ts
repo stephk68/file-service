@@ -12,6 +12,7 @@ export class UserService {
     if (!ipAddress) {
       throw new ConflictException('IP address is required');
     }
+    
    
     await this.redisService.lpush('White-List', ipAddress);
     return { message: `IP address : ${ipAddress} added to white list` };

@@ -44,41 +44,41 @@ const existingUser = await this.redisService.jsonGet("Creditentials");
     console.log(`Welcome to  ${existingUser.username}`);
     
 
-    const payload = {
-      IpAddress : IP,
-    };
+    // const payload = {
+    //   IpAddress : IP,
+    // };
 
-    const tokenResult = await this.generateToken(payload);
+    // const tokenResult = await this.generateToken(payload);
 
     
     return {
-      access_token: tokenResult.access_token,
+      // access_token: tokenResult.access_token,
       message : await this.UserService.create({...CreateUserDto, IpAddress : IP})
       
     };
   }
 
 
-  async generateToken(payload: JwtPayload): Promise<Token> {
-    try {
-      const jwtPayload = { 
-        IpAddress : payload.IpAddress,
-      };
+  // async generateToken(payload: JwtPayload): Promise<Token> {
+  //   try {
+  //     const jwtPayload = { 
+  //       IpAddress : payload.IpAddress,
+  //     };
       
-      const token = jwt.sign(jwtPayload, this.jwtSecret);
+  //     const token = jwt.sign(jwtPayload, this.jwtSecret);
       
-      return { access_token: token 
-      };
-    } catch (error) {
-      throw new Error(`Token generation failed: ${error.message}`);
-    }
-  }
+  //     return { access_token: token 
+  //     };
+  //   } catch (error) {
+  //     throw new Error(`Token generation failed: ${error.message}`);
+  //   }
+  // }
 
-  verifyToken(token: string): any {
-    try {
-      return jwt.verify(token, this.jwtSecret);
-    } catch (error) {
-      throw new Error('Invalid token');
-    }
-  }
+  // verifyToken(token: string): any {
+  //   try {
+  //     return jwt.verify(token, this.jwtSecret);
+  //   } catch (error) {
+  //     throw new Error('Invalid token');
+  //   }
+  // }
 }

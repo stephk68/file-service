@@ -13,6 +13,10 @@ export class FileService {
 
   async create(createFileDto: CreateFileDto) {
     // Normalize filepath
+
+    if(await !this.supabaseService.bucketExists(createFileDto.project)){
+      this.supabaseService.createBucket(createFileDto.project)
+    }
     createFileDto.filepath = createFileDto.filepath ?? '';
     if (createFileDto.filepath && !createFileDto.filepath.endsWith("/")) {
       createFileDto.filepath = createFileDto.filepath + "/";
@@ -113,12 +117,26 @@ export class FileService {
     if (!filepath) {
       throw new Error('Filepath is required to delete a file.');
     }
-try {
-    await this.supabaseService.deleteFiles(bucketName, [filepath]);}
-    catch(err){
-      throw new ConflictException("Could not delete this file")
-    }
 
-    return { message: `File at path "${filepath}" in bucket "${bucketName}" has been deleted.` };
+    // Function to determine if filepath is a file (has an extension)
+    const isFile = (path: string) => {
+      // Extract last part after slash and check if it contains a "."
+      const name = path.split('/').pop();
+      return !!name && name.includes('.') && !name.endsWith('.');
+    };
+
+    try {
+      if (isFile(filepath)) {
+        // Delete as file
+        await this.supabaseService.deleteFiles(bucketName, [filepath]);
+        return { message: `File at path "${filepath}" in bucket "${bucketName}" has been deleted.` };
+      } else {
+        // Delete as folder
+        const result = await this.supabaseService.deleteFolder(bucketName, filepath);
+        return { message: result.message };
+      }
+    } catch (err) {
+      throw new ConflictException("Could not delete this resource");
+    }
   }
 }

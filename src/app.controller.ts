@@ -6,9 +6,16 @@ export class AppController {
   constructor(private readonly appService: AppService
   ) {}
 
-  @Get()
-  getWorking() {
-    return this.appService.getHello;
-  }
+  // @Get()
+  // getWorking() {
+  //   return this.appService.getHello;
+  // }
+
+  // @Get('health')
+  // getWorking2() {
+  //   return this.appService.getHello;
+  // }
+
+
 
 }

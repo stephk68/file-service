@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+import { Module} from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -8,14 +8,16 @@ import { FileModule } from './modules/file/file.module';
 
 import { UserModule } from './modules/user/user.module';
 
-import { FileController } from './modules/file/file.controller';
+import { FileController, ProjectController } from './modules/file/file.controller';
 import { JwtAuthService } from './shared/jwt/jwt.service';
 import { RedisService } from './shared/redis.service';
 import { FileService } from './modules/file/file.service';
 import { UserService } from './modules/user/user.service';
 
 import { BucketExistsConstraint } from './shared/decorators/BucketExists.decorator';
+import { ScheduleModule } from '@nestjs/schedule';
 
+import { CleanupService} from './shared/cleanup.service';
 @Module({
 
   
@@ -24,12 +26,13 @@ import { BucketExistsConstraint } from './shared/decorators/BucketExists.decorat
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ScheduleModule.forRoot(),
     FileModule,
     UserModule,
    
   ],
-  controllers: [AppController,FileController],
-  providers: [AppService, SupabaseService,JwtAuthService, RedisService, FileService,UserService,BucketExistsConstraint],
+  controllers: [AppController,FileController,ProjectController],
+  providers: [AppService, SupabaseService,JwtAuthService, RedisService, FileService,UserService,BucketExistsConstraint, CleanupService],
   exports: [BucketExistsConstraint],
 })
 
