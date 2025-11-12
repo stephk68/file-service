@@ -1,4 +1,4 @@
-import { Module} from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -8,19 +8,22 @@ import { FileModule } from './modules/file/file.module';
 
 import { UserModule } from './modules/user/user.module';
 
-import { FileController, ProjectController } from './modules/file/file.controller';
-import { JwtAuthService } from './shared/jwt/jwt.service';
-import { RedisService } from './shared/redis.service';
+import {
+  FileController,
+  ProjectController,
+} from './modules/file/file.controller';
 import { FileService } from './modules/file/file.service';
 import { UserService } from './modules/user/user.service';
+import { JwtAuthService } from './shared/jwt/jwt.service';
+import { RedisService } from './shared/redis.service';
 
-import { BucketExistsConstraint } from './shared/decorators/BucketExists.decorator';
 import { ScheduleModule } from '@nestjs/schedule';
+import { BucketExistsConstraint } from './shared/decorators/BucketExists.decorator';
 
-import { CleanupService} from './shared/cleanup.service';
+import { BootstrapService } from './shared/bootstrap.service';
+import { CleanupService } from './shared/cleanup.service';
+
 @Module({
-
-  
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
@@ -29,12 +32,19 @@ import { CleanupService} from './shared/cleanup.service';
     ScheduleModule.forRoot(),
     FileModule,
     UserModule,
-   
   ],
-  controllers: [AppController,FileController,ProjectController],
-  providers: [AppService, SupabaseService,JwtAuthService, RedisService, FileService,UserService,BucketExistsConstraint, CleanupService],
+  controllers: [AppController, FileController, ProjectController],
+  providers: [
+    AppService,
+    SupabaseService,
+    JwtAuthService,
+    RedisService,
+    FileService,
+    UserService,
+    BucketExistsConstraint,
+    CleanupService,
+    BootstrapService, // Service d'initialisation au démarrage
+  ],
   exports: [BucketExistsConstraint],
 })
-
-export class AppModule {
-}
+export class AppModule {}

@@ -23,38 +23,89 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+**File-Service** - API de gestion de fichiers avec stockage Supabase et authentification JWT.
+
+Service NestJS pour gérer l'upload, le téléchargement, la mise à jour et la suppression de fichiers dans des buckets Supabase.
+
+## 📚 Documentation API
+
+### Swagger UI Interactive
+
+Documentation interactive disponible sur : **http://localhost:3000/api**
+
+- Interface web pour tester tous les endpoints
+- Authentification JWT intégrée
+- Exemples de requêtes/réponses
+- Validation automatique
+
+### Collection Postman
+
+Collection complète disponible dans le dossier `postman/` :
+
+- **File-Service-API.postman_collection.json** - Collection avec 8 endpoints
+- **File-Service-Local.postman_environment.json** - Environnement local
+- **File-Service-Production.postman_environment.json** - Environnement production
+
+📖 Guide complet : [postman/README.md](postman/README.md)
+📮 Guide d'importation : [postman/IMPORT_GUIDE.md](postman/IMPORT_GUIDE.md)
 
 ## Project setup
 
+**Note:** Ce projet utilise **Yarn** comme gestionnaire de paquets.
+
 ```bash
-$ npm install
+$ yarn install
 ```
 
 ## Compile and run the project
 
 ```bash
 # development
-$ npm run start
+$ yarn start
 
-# watch mode
-$ npm run start:dev
+# watch mode (recommandé)
+$ yarn start:dev
 
 # production mode
-$ npm run start:prod
+$ yarn start:prod
 ```
+
+Une fois démarré, accédez à :
+
+- **API Swagger** : http://localhost:3000/api
+- **Endpoint de test** : http://localhost:3000
 
 ## Run tests
 
 ```bash
 # unit tests
-$ npm run test
+$ yarn test
 
 # e2e tests
-$ npm run test:e2e
+$ yarn test:e2e
 
 # test coverage
-$ npm run test:cov
+$ yarn test:cov
+```
+
+## 🛠️ Scripts utiles
+
+```bash
+# Lancer l'application en développement
+$ yarn start:dev
+
+# Afficher l'URL de la documentation Swagger
+$ yarn docs
+
+# Afficher le chemin de la collection Postman
+$ yarn postman
+
+# Build le projet
+$ yarn build
+
+# Linter et formater le code
+$ yarn lint
+$ yarn format
 ```
 
 ## Deployment
