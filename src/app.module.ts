@@ -21,7 +21,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { BucketExistsConstraint } from './shared/decorators/BucketExists.decorator';
 
 import { BootstrapService } from './shared/bootstrap.service';
-import { CleanupService } from './shared/cleanup.service';
 
 @Module({
   imports: [
@@ -42,7 +41,6 @@ import { CleanupService } from './shared/cleanup.service';
     FileService,
     UserService,
     BucketExistsConstraint,
-    CleanupService,
     BootstrapService, // Service d'initialisation au démarrage
   ],
   exports: [BucketExistsConstraint],
